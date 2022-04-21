@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2022-04-15 09:55:56
- * @LastEditTime: 2022-04-21 09:34:44
+ * @LastEditTime: 2022-04-21 11:10:49
  * @LastEditors: Please set LastEditors
  * @Description: 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  * @FilePath: /catkin_ws/src/pcl_test/src/pcl_test.cpp
@@ -77,7 +77,7 @@ int g_ActionCommandTargetIp = 0xFFFFFFFF;  // Send the commands to the broadcast
 
 // HLT settings
 // #define HLT_Operating_Mode "Distance6000mmSingleFreq"
-#define HLT_Operating_Mode "Distance3000mmSingleFreq"
+#define HLT_Operating_Mode "Distance1250mmSingleFreq"
 // options:
 //	 Distance8333mmMultiFreq
 //	 Distance6000mmSingleFreq
@@ -86,7 +86,7 @@ int g_ActionCommandTargetIp = 0xFFFFFFFF;  // Send the commands to the broadcast
 //	 Distance3000mmSingleFreq
 //	 Distance1250mmSingleFreq
 // single-frequency operating modes have faster image capture
-#define HLT_Exposure_Time "Exp1000Us"
+#define HLT_Exposure_Time "Exp62_5Us"
 // options:
 //	 Exp1000Us
 //	 Exp250Us
@@ -385,33 +385,9 @@ void OverlayColorOnto3DAndSave(Arena::IDevice* pDeviceTRI, Arena::IDevice* pDevi
     point_cloud_ptr->width = (int)point_cloud_ptr->points.size();
     point_cloud_ptr->height = 1;
 
-    // ros::NodeHandle nh;
-    // ros::Publisher pcl_hub = nh.advertise<sensor_msgs::PointCloud2> ("cloud", 1);
-
-    // while (ros::ok())
-    // {
-    // sensor_msgs::PointCloud2 output;
-    // pcl::toROSMsg(*point_cloud_ptr, output);
-    // output.header.frame_id="pcl_output";
-    //     pcl_hub.publish(output);
-    // }
-
-    // pcl::PointCloud<pcl::PointXYZ> testcloud;  // point cloud msg
-    // PointCloud2 msg
-
-    // testcloud.width = 50000;
-    // testcloud.height = 2;
-    // testcloud.points.resize(testcloud.width * testcloud.height);
-
-    // while (ros::ok()) {
-    //     for (size_t i = 0; i < testcloud.points.size(); ++i) {
-    //         testcloud.points[i].x = 1024 * rand() / (RAND_MAX + 1.0f);
-    //         testcloud.points[i].y = 1024 * rand() / (RAND_MAX + 1.0f);
-    //         testcloud.points[i].z = 1024 * rand() / (RAND_MAX + 1.0f);
-    //     }
     pcl::toROSMsg(*point_cloud_ptr, output);  // point cloud msg -> ROS msg
 
-    std::cout << TAB1 << "Save overlay to " << plyWriter.GetLastFileName(true) << "\n\n";
+    // std::cout << TAB1 << "Save overlay to " << plyWriter.GetLastFileName(true) << "\n\n";
 
     // requeue image buffers
     pDeviceHLT->RequeueBuffer(pImageHLT);
@@ -437,7 +413,7 @@ bool isApplicableDeviceHelios2(Arena::DeviceInfo deviceInfo)  // either Helios2 
 }
 
 int main(int argc, char** argv) {
-    ROS_INFO("Log In Success!!!!!!!");
+    // ros init
     ros::init(argc, argv, "pcdp");
     ros::NodeHandle n;
 
@@ -564,6 +540,14 @@ int main(int argc, char** argv) {
                 int64_t actionCommandExecuteTime = Arena::GetNodeValue<int64_t>(pSystem->GetTLSystemNodeMap(), "ActionCommandExecuteTime");
                 OverlayColorOnto3DAndSave(pDeviceTRI, pDeviceHLT, actionCommandExecuteTime, i);
                 std::cout << "actionCommandExecuteTime:" << actionCommandExecuteTime << std::endl;
+                // ros publish
+
+                output.header.frame_id = "pcdp";
+                output.header.stamp = ros::Time::now();
+                ROS_INFO("===========output=============");
+                rgb_pub.publish(rgb_msg);
+                depth_pub.publish(depth_msg);
+                pcl_pub.publish(output);  // publish
             }
 
             std::cout << "\nExample complete\n";
@@ -593,15 +577,17 @@ int main(int argc, char** argv) {
         exceptionThrown = true;
     }
 
-    output.header.frame_id = "pcdp";
-    output.header.stamp = ros::Time::now();
-    while (1) {
-        ROS_INFO("===========output=============");
-        rgb_pub.publish(rgb_msg);
-        depth_pub.publish(depth_msg);
-        pcl_pub.publish(output);  // publish
-        sleep(1);
-    }
+    // // ros publish
+
+    // output.header.frame_id = "pcdp";
+    // output.header.stamp = ros::Time::now();
+    // while (1) {
+    //     ROS_INFO("===========output=============");
+    //     rgb_pub.publish(rgb_msg);
+    //     depth_pub.publish(depth_msg);
+    //     pcl_pub.publish(output);  // publish
+    //     sleep(1);
+    // }
 
     std::cout << "Press enter to complete\n";
     std::getchar();
